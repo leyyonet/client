@@ -1,4 +1,4 @@
-import {PoolConfigLike, PoolOption} from "./index-types";
+import {PoolConfigLike, PoolOption, WrapperClear} from "./index-types";
 import {AxiosProxyConfig, AxiosRequestHeaders} from "axios";
 import {leyyo, OneOrMore, Primitive, RecLike} from "@leyyo/core";
 import {
@@ -13,11 +13,14 @@ import {Fqn} from "@leyyo/fqn";
 import {FQN_NAME} from "../internal-component";
 
 @Fqn(...FQN_NAME)
-export abstract class PoolConfig implements PoolConfigLike {
+export abstract class PoolConfig<C = WrapperClear> implements PoolConfigLike<C> {
+    // region properties
+    protected _ttt: Array<C>;
     protected _statistics: StatisticsWrapperLike
     protected _authorization: AuthorizationWrapperLike;
     protected _baseHeader?: AxiosRequestHeaders;
     protected _baseQuery?: RecLike;
+    protected _baseCookie?: RecLike;
     protected _querySerializer?: WrapperParamsSerializerLambda;
     protected _timeout?: number;
     protected _timeoutErrorMessage?: string;
@@ -32,9 +35,16 @@ export abstract class PoolConfig implements PoolConfigLike {
     protected _onSuccess?: WrapperResponseSuccessLambda;
     protected _onError?: WrapperResponseErrorLambda;
     protected _errorParser?: WrapperErrorParserLambda;
+    // endregion properties
 
-    protected constructor(opt: PoolOption) {
-        opt = leyyo.primitive.object(opt) ?? {} as PoolOption;
+    protected constructor(opt: PoolOption<C>) {
+        this._ttt = [];
+        opt = leyyo.primitive.object(opt) ?? {} as PoolOption<C>;
+
+        // region properties
+        if (opt.ttt !== undefined) {
+            this.ttt(...opt.ttt);
+        }
         if (opt.authorization !== undefined) {
             this.authorization(opt.authorization);
         }
@@ -89,10 +99,19 @@ export abstract class PoolConfig implements PoolConfigLike {
         if (opt.decompress !== undefined) {
             this.decompress(opt.decompress);
         }
+        // endregion properties
     }
+
+    // region protected
     protected _defTrue(value: boolean): boolean {
         return (value === undefined) ? true : value;
     }
+    protected _overridden(key: string): boolean {
+        return this._ttt.includes(key as unknown as C);
+    }
+    // endregion protected
+
+    // region from-pool
 
     // region statistics
     get statistics(): StatisticsWrapperLike {
@@ -103,6 +122,21 @@ export abstract class PoolConfig implements PoolConfigLike {
         return this._statistics;
     }
     // endregion statistics
+
+    // region ttt
+    get getTtt(): Array<C> {
+        return this._ttt;
+    }
+
+    ttt(...fields: Array<C>): this {
+        fields.forEach(field => {
+            if (!this._ttt.includes(field)) {
+                this._ttt.push(field)
+            }
+        })
+        return this;
+    }
+    // endregion ttt
 
     // region authorization
     get getAuthorization(): AuthorizationWrapperLike {
@@ -177,6 +211,36 @@ export abstract class PoolConfig implements PoolConfigLike {
         return this;
     }
     // endregion baseQuery
+
+    // region baseCookie
+    protected _setCookie(key: string, value: OneOrMore<Primitive>): void {
+        this._baseCookie[key] = value;
+    }
+    get getBaseCookie(): RecLike {
+        return this._baseCookie;
+    }
+    baseCookie(cookies: RecLike): this;
+    baseCookie(name: string, value: string): this;
+    baseCookie(cookies: RecLike | string, value?: string): this {
+        if (!this._baseCookie) {
+            this._baseCookie = {};
+        }
+        if (leyyo.is.object(cookies)) {
+            for (const [k, v] of Object.entries(cookies)) {
+                this._setCookie(k, v as string);
+            }
+        } else if (typeof cookies === "string") {
+            this._setCookie(cookies, value);
+        }
+        else {
+            // todo
+        }
+        if (Object.keys(this._baseCookie).length < 1) {
+            this._baseCookie = null;
+        }
+        return this;
+    }
+    // endregion baseCookie
 
     // region decompress
     get getDecompress(): boolean {
@@ -340,4 +404,5 @@ export abstract class PoolConfig implements PoolConfigLike {
         return this;
     }
     // endregion timeoutErrorMessage
+    // endregion from-pool
 }

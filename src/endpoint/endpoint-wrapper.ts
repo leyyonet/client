@@ -1,11 +1,9 @@
 import {EndpointConfig} from "./endpoint-config";
 import {EndpointOption, EndpointWrapperLike} from "./index-types";
-import axios, {AxiosRequestConfig, AxiosResponse} from "axios";
-import {HttpMethod, leyyo, RecLike} from "@leyyo/core";
-import {PAYLOAD_SEND} from "../index-types";
+import {AxiosResponse} from "axios";
+import {HttpMethod, leyyo} from "@leyyo/core";
 import {ControllerWrapperLike} from "../controller";
-import {CallOption} from "../call";
-import * as qs from "qs";
+import {CallOption, CallWrapper} from "../call";
 import {StatisticsWrapper} from "../statistics";
 import {Fqn} from "@leyyo/fqn";
 import {FQN_NAME} from "../internal-component";
@@ -13,27 +11,12 @@ import {FQN_NAME} from "../internal-component";
 @Fqn(...FQN_NAME)
 export class EndpointWrapper extends EndpointConfig implements EndpointWrapperLike {
     protected readonly _controller: ControllerWrapperLike;
+    // region specials
     protected _method: HttpMethod;
     protected _path: string;
     protected _operationId: string;
+    // endregion specials
 
-    private _parseMustache(str: string, obj: RecLike): string {
-        return str.replace(/{\s*([\w.]+)\s*}/g, (tag: string, match: string): string => {
-            const nodes = match.split(".");
-            let current = {...obj} as RecLike;
-            const length = nodes.length;
-            let i = 0;
-            while (i < length) {
-                try {
-                    current = current[nodes[i]] as RecLike;
-                } catch (e) {
-                    return "";
-                }
-                i++;
-            }
-            return current as unknown as string;
-        });
-    }
 
     constructor(controller: ControllerWrapperLike, opt: EndpointOption) {
         opt = leyyo.primitive.object(opt) ?? {} as EndpointOption;
@@ -41,6 +24,7 @@ export class EndpointWrapper extends EndpointConfig implements EndpointWrapperLi
         this._controller = controller;
         this._statistics = new StatisticsWrapper();
 
+        // region specials
         if (opt.method !== undefined) {
             this.method(opt.method);
         }
@@ -50,6 +34,7 @@ export class EndpointWrapper extends EndpointConfig implements EndpointWrapperLi
         if (opt.operationId !== undefined) {
             this.operationId(opt.operationId);
         }
+        // endregion specials
     }
 
     // region controller
@@ -58,6 +43,7 @@ export class EndpointWrapper extends EndpointConfig implements EndpointWrapperLi
     }
     // endregion controller
 
+    // region specials
     // region method
     get getMethod(): HttpMethod {
         return this._method;
@@ -137,65 +123,13 @@ export class EndpointWrapper extends EndpointConfig implements EndpointWrapperLi
         return this;
     }
     // endregion operationId
+    // endregion specials
 
 
     // region call
     async run<P = unknown, D = unknown>(opt?: CallOption): Promise<AxiosResponse<P, D>> {
-        opt = leyyo.primitive.object(opt) ?? {} as CallOption;
-        const config: AxiosRequestConfig<P> = {
-            baseURL: this.getBaseUrl,
-            headers: this.getBaseHeader ?? {},
-            params: this.getBaseHeader ?? {},
-            paramsSerializer: this.getQuerySerializer,
-            timeout: this.getTimeout,
-            timeoutErrorMessage: this.getTimeoutErrorMessage,
-            // responseType: this.getResponseType, // todo
-            maxContentLength: this.getMaxContentLength,
-            maxBodyLength: this.getMaxBodyLength,
-            maxRedirects: this.getMaxRedirects,
-            proxy: this.getProxy,
-            decompress: this.getDecompress,
-            url: this.getFullUrl ?? (this.getBaseUrl + (this.controller.getFolder ?? '')) + (this.getPath ?? ''),
-            method: this.getMethod,
-            data: opt.payload as P,
-        };
-        if (config.url && leyyo.is.object(opt.paths, true)) {
-            config.url = this._parseMustache(config.url, opt.paths);
-        }
-        if (this.getIsForm && leyyo.is.object(config.data, true)) {
-            config.data = qs.stringify(config.data);
-        }
-        if (!PAYLOAD_SEND.includes(this.getMethod)) {
-            if (config?.data) {
-                delete config.data;
-            }
-        }
-        if (this.getOnRequest) {
-            try {
-                this.getOnRequest(config);
-            } catch (e) {
-            }
-        }
-        try {
-            const response = await axios.request<P, D>(config) as AxiosResponse<P, D>;
-            if (this.getOnSuccess) {
-                try {
-                    return this.getOnSuccess(response) as AxiosResponse<P, D>;
-                } catch (e) {
-                }
-            }
-            return response;
-        } catch (e) {
-            let err = e;
-            const response = this.getErrorParser(e, config);
-            if (this.getOnError) {
-                try {
-                    err = this.getOnError(response);
-                } catch (e) {
-                }
-            }
-            throw err;
-        }
+        const call = new CallWrapper(this, opt);
+        return call.run();
     }
     async data<P = unknown, D = unknown>(opt?: CallOption): Promise<D> {
         return (await this.run(opt)).data as D;

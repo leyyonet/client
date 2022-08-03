@@ -2,27 +2,29 @@ import {ServerClear, ServerConfigLike, ServerExclude, ServerOption, ServerWrappe
 import {EndpointOption, EndpointWrapperLike} from "../endpoint";
 import {HttpMethod} from "@leyyo/core";
 
-export interface ControllerOption extends ServerOption {
+export interface ControllerOption<C = ServerClear> extends ServerOption<C> {
+    // region properties
+    // endregion properties
+    // region specials
+    // endregion specials
     folder?: string;
     identifier?: string;
-
-    clearServer?: Array<ServerClear>;
 }
-export type ControllerExclude = ServerExclude | 'folder' | 'identifier' | 'clearServer';
+export type ControllerExclude = ServerExclude | 'folder' | 'identifier';
 export type ControllerClear = Exclude<keyof ControllerOption, ControllerExclude>;
 
-export interface ControllerConfigLike extends ServerConfigLike {
-
-    // region clearServer
-    get getClearServer(): Array<ServerClear>;
-    clearServer(...fields: Array<ServerClear>): this;
-    // endregion clearServer
+export interface ControllerConfigLike<C = ServerClear> extends ServerConfigLike<C> {
+    // region properties
+    none(): this;
+    // endregion properties
 }
 export interface ControllerWrapperLike extends ControllerConfigLike {
     // region server
     get server(): ServerWrapperLike;
     // endregion server
 
+    // region specials
+    // endregion specials
     // region folder
     get getFolder(): string;
     folder(folder?: string): this;

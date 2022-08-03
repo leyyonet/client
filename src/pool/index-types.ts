@@ -11,10 +11,13 @@ import {ServerOption, ServerWrapperLike} from "../server";
 import {StatisticsWrapperLike} from "../statistics";
 import {AuthorizationOption} from "../authorization";
 
-
-export interface PoolOption {
+export type WrapperClear = 'none';
+export interface PoolOption<C = WrapperClear> {
+    // region properties
+    ttt?: Array<C>;
     baseHeader?: AxiosRequestHeaders;
     baseQuery?: RecLike;
+    baseCookie?: RecLike;
     querySerializer?: WrapperParamsSerializerLambda;
     timeout?: number;
     timeoutErrorMessage?: string;
@@ -30,12 +33,23 @@ export interface PoolOption {
     errorParser?: WrapperErrorParserLambda;
     authorization?: AuthorizationOption;
     defStats?: boolean;
+    // endregion properties
+    // region specials
+    // endregion specials
 }
-export type PoolClear = keyof PoolOption;
-export interface PoolConfigLike {
+
+export type PoolExclude = 'zzz';
+export type PoolClear = Exclude<keyof PoolOption, PoolExclude>;
+
+export interface PoolConfigLike<C = WrapperClear> {
     // region statistics
     get statistics(): StatisticsWrapperLike;
     // endregion statistics
+
+    // region ttt
+    get getTtt(): Array<C>;
+    ttt(...fields: Array<C>): this;
+    // endregion ttt
 
     // region authorization
     get getAuthorization(): AuthorizationOption;
@@ -53,6 +67,12 @@ export interface PoolConfigLike {
     baseQuery(queries: RecLike): this;
     baseQuery(name: string, value: OneOrMore<Primitive>): this;
     // endregion baseQuery
+
+    // region baseCookie
+    get getBaseCookie(): RecLike;
+    baseCookie(queries: RecLike): this;
+    baseCookie(name: string, value: string): this;
+    // endregion baseCookie
 
     // region decompress
     get getDecompress(): boolean;
@@ -127,6 +147,9 @@ export interface PoolConfigLike {
 }
 
 export interface PoolWrapperLike extends PoolConfigLike {
+    // region specials
+    // endregion specials
+
     get servers(): Map<string, ServerWrapperLike>;
 
     addServer(opt: ServerOption): ServerWrapperLike;

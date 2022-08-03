@@ -60,7 +60,7 @@ export function Cookie(name: string, ...pipes: Array<unknown>): ParameterDecorat
         id.fork(target, propertyKey, index).set({name, pipes});
     });
 }
-fqn.func(Header);
+fqn.func(Cookie);
 // endregion Cookie
 // region File
 export function File(name: string, ...pipes: Array<unknown>): ParameterDecorator {
@@ -269,6 +269,7 @@ export function Timeout(msec: number, classDef?: string|ClassLike): ClassDecorat
 }
 // endregion Timeout
 // region Retry
+// retry by http status, exception name or function
 export interface RetryOpt extends RecLike {
     times: number;
     status?: number;

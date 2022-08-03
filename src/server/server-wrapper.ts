@@ -11,17 +11,21 @@ import {StatisticsWrapper} from "../statistics";
 export class ServerWrapper extends ServerConfig implements ServerWrapperLike {
     protected readonly _pool: PoolWrapperLike;
     protected readonly _controllers: Array<ControllerWrapperLike>;
+    // region specials
     protected _name: string;
+    // endregion specials
+
     constructor(pool: PoolWrapperLike, opt:ServerOption) {
         opt = leyyo.primitive.object(opt) ?? {} as ServerOption;
         super(opt);
-        if (opt.name !== undefined) {
-            this.name(opt.name);
-        }
         this._pool = pool;
         this._controllers = [];
         this._statistics = new StatisticsWrapper(() => this._controllers.map( controller => controller.statistics));
-        this.name(opt.name);
+        // region specials
+        if (opt.name !== undefined) {
+            this.name(opt.name);
+        }
+        // endregion specials
     }
 
     // region pool
@@ -30,6 +34,7 @@ export class ServerWrapper extends ServerConfig implements ServerWrapperLike {
     }
     // endregion pool
 
+    // region specials
     // region name
     get getName(): string {
         return this._name;
@@ -40,6 +45,7 @@ export class ServerWrapper extends ServerConfig implements ServerWrapperLike {
         return this;
     }
     // endregion name
+    // endregion specials
 
     // region controllers
     get controllers(): Array<ControllerWrapperLike> {

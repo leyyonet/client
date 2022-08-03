@@ -4,19 +4,22 @@ import {ServerConfigLike} from "../server";
 import {CallOption} from "../call";
 import {AxiosResponse} from "axios";
 
-export interface EndpointOption extends ControllerOption {
+export interface EndpointOption<C = ControllerClear> extends ControllerOption<C> {
+    // region specials
+    // endregion specials
     method?: HttpMethod;
     path?: string;
     operationId?: string;
 
+    // region properties
+    // endregion properties
     fullUrl?: string;
     description?: string;
-    clearController?: Array<ControllerClear>;
 }
-export type EndpointExclude = ControllerExclude | 'method' | 'path' | 'operationId' | 'clearController';
+export type EndpointExclude = ControllerExclude | 'method' | 'path' | 'operationId';
 export type EndpointClear = Exclude<keyof EndpointOption, EndpointExclude>;
 
-export interface EndpointConfigLike extends ServerConfigLike {
+export interface EndpointConfigLike<C = ControllerClear> extends ServerConfigLike<C> {
 
     // region description
     get getDescription(): string;
@@ -27,17 +30,14 @@ export interface EndpointConfigLike extends ServerConfigLike {
     get getFullUrl(): string;
     fullUrl(fullUrl: string): this;
     // endregion fullUrl
-
-    // region clearController
-    get getClearController(): Array<ControllerClear>;
-    clearController(...fields: Array<ControllerClear>): this;
-    // endregion clearController
-
 }
 export interface EndpointWrapperLike extends EndpointConfigLike {
     // region controller
     get controller(): ControllerWrapperLike;
     // endregion controller
+
+    // region specials
+    // endregion specials
 
     // region method
     get getMethod(): HttpMethod;

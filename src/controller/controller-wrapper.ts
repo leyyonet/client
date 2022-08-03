@@ -11,28 +11,34 @@ import {FQN_NAME} from "../internal-component";
 export class ControllerWrapper extends ControllerConfig implements ControllerWrapperLike {
     protected readonly _server: ServerWrapperLike;
     protected readonly _endpoints: Array<EndpointWrapperLike>;
+    // region specials
     protected _folder: string;
     protected _identifier: string;
+    // endregion specials
 
     constructor(server: ServerWrapperLike, opt: ControllerOption) {
         opt = leyyo.primitive.object(opt) ?? {} as ControllerOption;
         super(opt);
+        this._server = server;
+        this._endpoints = [];
+        this._statistics = new StatisticsWrapper(() => this._endpoints.map( endpoint => endpoint.statistics));
+        // region specials
         if (opt.folder !== undefined) {
             this.folder(opt.folder);
         }
         if (opt.identifier !== undefined) {
             this.identifier(opt.identifier);
         }
-        this._server = server;
-        this._endpoints = [];
-        this._statistics = new StatisticsWrapper(() => this._endpoints.map( endpoint => endpoint.statistics));
+        // endregion specials
     }
+
     // region server
     get server(): ServerWrapperLike {
         return this._server;
     }
     // endregion server
 
+    // region specials
     // region folder
     get getFolder(): string {
         return this._folder;
@@ -52,6 +58,8 @@ export class ControllerWrapper extends ControllerConfig implements ControllerWra
         return this;
     }
     // endregion identifier
+    // endregion specials
+
     // region endpoints
     get endpoints(): Array<EndpointWrapperLike> {
         return this._endpoints;

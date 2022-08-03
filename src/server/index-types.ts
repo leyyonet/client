@@ -1,18 +1,20 @@
-import {PoolClear, PoolConfigLike, PoolOption, PoolWrapperLike} from "../pool";
+import {PoolClear, PoolConfigLike, PoolExclude, PoolOption, PoolWrapperLike} from "../pool";
 import {ControllerOption, ControllerWrapperLike} from "../controller";
 
-export interface ServerOption extends PoolOption {
+export interface ServerOption<C = PoolClear> extends PoolOption<C> {
     name?: string;
+    // region specials
+    // endregion specials
 
+    // region properties
+    // endregion properties
     baseUrl?: string;
     isForm?: boolean;
-    clearPool?: Array<PoolClear>;
 }
-export type ServerExclude = 'name' | 'clearPool';
+export type ServerExclude = PoolExclude | 'name';
 export type ServerClear = Exclude<keyof ServerOption, ServerExclude>;
 
-
-export interface ServerConfigLike extends PoolConfigLike {
+export interface ServerConfigLike<C = PoolClear> extends PoolConfigLike<C> {
     // region baseUrl
     get getBaseUrl(): string;
     baseUrl(baseUrl: string): this;
@@ -21,10 +23,6 @@ export interface ServerConfigLike extends PoolConfigLike {
     get getIsForm(): boolean;
     isForm(isForm?: boolean): this;
     // endregion isForm
-    // region clearPool
-    get getClearPool(): Array<PoolClear>;
-    clearPool(...fields: Array<PoolClear>): this;
-    // endregion clearPool
 }
 
 export interface ServerWrapperLike extends ServerConfigLike {
@@ -32,6 +30,8 @@ export interface ServerWrapperLike extends ServerConfigLike {
     get pool(): PoolWrapperLike;
     // endregion pool
 
+    // region specials
+    // endregion specials
     // region name
     get getName(): string;
     name(name?: string): this;

@@ -10,12 +10,24 @@ import {StatisticsWrapper} from "../statistics";
 class PoolWrapper extends PoolConfig implements PoolWrapperLike {
     private readonly _servers: Map<string, ServerWrapperLike>;
     private static readonly _DEF_NAME = 'default';
+    // region specials
+    // endregion specials
 
     constructor(opt?: PoolOption) {
         super(opt);
         this._servers = new Map<string, ServerWrapperLike>();
         this._servers.set(PoolWrapper._DEF_NAME, new ServerWrapper(this, {name: PoolWrapper._DEF_NAME}));
         this._statistics = new StatisticsWrapper(() => Array.from(this._servers.values()).map( server => server.statistics));
+        // region specials
+        // endregion specials
+    }
+
+    // region specials
+    // endregion specials
+
+    // region servers
+    get servers(): Map<string, ServerWrapperLike> {
+        return this._servers;
     }
 
     addServer(opt: ServerOption): ServerWrapperLike {
@@ -32,9 +44,6 @@ class PoolWrapper extends PoolConfig implements PoolWrapperLike {
         return server;
     }
 
-    get servers(): Map<string, ServerWrapperLike> {
-        return this._servers;
-    }
 
     serverByName(name: string, mandatory?: boolean): ServerWrapperLike {
         const given = name;
@@ -61,5 +70,7 @@ class PoolWrapper extends PoolConfig implements PoolWrapperLike {
     static {
         leyyo.component.add(COMPONENT_NAME);
     }
+    // endregion servers
 }
+// noinspection JSUnusedGlobalSymbols
 export const poolWrapper = new PoolWrapper();
